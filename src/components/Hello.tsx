@@ -104,7 +104,7 @@ export const Hello: React.FC<HelloProps> = () => {
       return;
     }
 
-    const keystation = WebMidi.getInputByName(selectedMidiController);
+    const keystation = WebMidi.getInputById(selectedMidiController);
 
     if (!keystation) {
       return;
@@ -146,7 +146,7 @@ export const Hello: React.FC<HelloProps> = () => {
           >
             <option hidden>{"Please select a midi controller"}</option>
             {controllers.map((input) => (
-              <option key={input.name} value={input.name}>
+              <option key={input.name} value={input.id}>
                 {input.name}
               </option>
             ))}
