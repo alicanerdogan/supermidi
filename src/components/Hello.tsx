@@ -2,7 +2,7 @@ import * as React from "react";
 import { twStyled, twCss } from "utils/styles";
 import * as tw from "tailwind-in-js";
 
-import WebMidi from "webmidi";
+import WebMidi, { Input } from "webmidi";
 import player, { InstrumentName } from "soundfont-player";
 import { instruments } from "utils/instruments";
 
@@ -129,6 +129,8 @@ export const Hello: React.FC<HelloProps> = () => {
       });
   }, [selectedMidiController, selectedInstrument]);
 
+  const controllers: Input[] = isWebMidiEnabled ? WebMidi.inputs : [];
+
   return (
     <HelloStyle>
       <Card>
@@ -142,7 +144,8 @@ export const Hello: React.FC<HelloProps> = () => {
             disabled={!isWebMidiEnabled}
             value={selectedMidiController}
           >
-            {WebMidi.inputs.map((input) => (
+            <option hidden>{"Please select a midi controller"}</option>
+            {controllers.map((input) => (
               <option key={input.name} value={input.name}>
                 {input.name}
               </option>
