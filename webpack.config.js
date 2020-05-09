@@ -33,7 +33,7 @@ const isProduction = process.argv.includes("--mode=production");
 
 const plugins = [
   new HtmlWebpackPlugin({
-    title: "Firestarter",
+    title: "supermidi.",
     template: "./src/index.html",
     minify: isProduction,
     globalStyle: minifiedGlobalStyle,
