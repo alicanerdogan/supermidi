@@ -1,10 +1,12 @@
 const path = require("path");
+const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 const { getGlobalStyles } = require("tailwind-in-js");
 const CleanCSS = require("clean-css");
+const WorkboxPlugin = require("workbox-webpack-plugin");
 
 const globalStyle = `
 ${getGlobalStyles()}
@@ -30,11 +32,19 @@ const minifiedGlobalStyle = new CleanCSS({ sourceMap: false }).minify(
 const API_HOSTNAME = "http://localhost:3000";
 
 const isProduction = process.argv.includes("--mode=production");
+const activateServiceWorker = isProduction || process.env.BABEL_ENV === "devsw";
+const activateReactRefresh = !isProduction && !activateServiceWorker;
+
+const environmentPlugin = new webpack.EnvironmentPlugin({
+  ACTIVATE_SW: activateServiceWorker,
+  IS_PRODUCTION: isProduction,
+});
 
 const plugins = [
+  environmentPlugin,
   new HtmlWebpackPlugin({
     title: "supermidi.",
-    template: "./src/index.html",
+    template: "./src/index.html.erb",
     minify: isProduction,
     globalStyle: minifiedGlobalStyle,
   }),
@@ -47,13 +57,26 @@ const plugins = [
   }),
 ];
 
-if (!isProduction) {
-  console.log("ReactRefreshWebpackPlugin");
+if (activateReactRefresh) {
   plugins.push(new ReactRefreshWebpackPlugin({ disableRefreshCheck: true }));
 }
 
+if (activateServiceWorker) {
+  const _2MB = 2 * 1024 * 1024;
+  const _10MB = 10 * 1024 * 1024;
+  const swSrc = path.join(__dirname, "src", "utils", "sw.js");
+  plugins.push(
+    new WorkboxPlugin.InjectManifest({
+      swSrc,
+      swDest: "sw.js",
+      maximumFileSizeToCacheInBytes: isProduction ? _2MB : _10MB,
+      webpackCompilationPlugins: [environmentPlugin],
+    })
+  );
+}
+
 module.exports = {
-  entry: "./src/index.tsx",
+  entry: { main: "./src/index.tsx", manifest: "./src/manifest/index.ts" },
   output: {
     filename: isProduction ? "[name].[contenthash].js" : "[name].[hash].js",
     path: __dirname + "/dist",
@@ -101,8 +124,19 @@ module.exports = {
       },
       {
         type: "javascript/auto",
+        test: /\.(png|svg|jpg|gif|ico|xml|json|webmanifest)$/,
+        include: [path.resolve(__dirname, "src/manifest")],
+        use: {
+          loader: "file-loader",
+          options: {
+            name: "[name].[ext]",
+          },
+        },
+      },
+      {
+        type: "javascript/auto",
         test: /\.(png|jpg|gif|ico|xml|json)$/,
-        include: [path.resolve(__dirname, "src/assets")],
+        exclude: [path.resolve(__dirname, "src/manifest")],
         use: {
           loader: "file-loader",
           options: {
@@ -139,13 +173,6 @@ module.exports = {
     minimizer: isProduction ? [new TerserPlugin()] : [],
     splitChunks: {
       minChunks: 2,
-      cacheGroups: {
-        commons: {
-          test: /[\\/]node_modules[\\/]/,
-          name: "vendors",
-          chunks: "async",
-        },
-      },
     },
   },
 };
