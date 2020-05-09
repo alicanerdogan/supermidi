@@ -11,6 +11,29 @@ export interface HelloProps {
   framework: string;
 }
 
+const ErrorBanner = twStyled.div(
+  tw.flex,
+  tw.bg_gray_200,
+  tw.border_t_4,
+  tw.border_pink_500,
+  tw.rounded_b,
+  tw.text_gray_900,
+  tw.px_4,
+  tw.py_3,
+  tw.shadow_md,
+  tw.items_center
+);
+
+const ErrorIconStyle = twCss(
+  tw.fill_current,
+  tw.h_6,
+  tw.w_6,
+  tw.mr_4,
+  tw.text_pink_800
+);
+
+const ErrorContent = twStyled.p(tw.text_sm);
+
 const selectClassNames = [
   tw.bg_white,
   tw.w_full,
@@ -81,11 +104,13 @@ export const Hello: React.FC<HelloProps> = () => {
     "acoustic_grand_piano"
   );
 
+  const [error, setError] = React.useState<string | undefined>(undefined);
   const [isWebMidiEnabled, setWebMidiEnabled] = React.useState(false);
   React.useEffect(() => {
     WebMidi.enable((err: any) => {
       if (err) {
         console.error(err);
+        setError(err.message || err.toString());
         return;
       }
       setWebMidiEnabled(true);
@@ -134,6 +159,17 @@ export const Hello: React.FC<HelloProps> = () => {
   return (
     <HelloStyle>
       <Card>
+        {error && (
+          <>
+            <ErrorBanner role="alert">
+              <svg css={ErrorIconStyle} viewBox="0 0 20 20">
+                <path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM9 11V9h2v6H9v-4zm0-6h2v2H9V5z" />
+              </svg>
+              <ErrorContent>{error}</ErrorContent>
+            </ErrorBanner>
+            <Spacer />
+          </>
+        )}
         <Label>{"Midi Controllers"}</Label>
         <SelectContainer>
           <select
