@@ -5,6 +5,8 @@ import * as tw from "tailwind-in-js";
 import WebMidi, { Input } from "webmidi";
 import player, { InstrumentName } from "soundfont-player";
 import { instruments } from "utils/instruments";
+import { ControlPanel } from "./ControlPanel";
+import { SoundControls, useSoundControls } from "./SoundControl";
 
 export interface HelloProps {
   compiler: string;
@@ -90,16 +92,44 @@ const Label = twStyled.label(
   tw.uppercase,
   tw.tracking_wide,
   tw.text_gray_700,
-  tw.text_xs,
+  tw.text_sm,
   tw.font_bold,
   tw.mb_2
 );
+
+const ControlPanelTitle = twStyled.h2(
+  tw.text_base,
+  tw.text_gray_700,
+  tw.font_bold,
+  tw.uppercase,
+  tw.tracking_wide
+);
+const ControlPanelHeader = twStyled.div(tw.mb_2);
 
 const Spacer = twStyled.div(tw.block, tw.h_8);
 
 export const HelloStyle = twStyled.div(tw.p_8);
 
+function usePlayOptions(soundControls: SoundControls) {
+  const soundControlsAsList = Object.entries(soundControls);
+  const key = soundControlsAsList
+    .map(([, soundControl]) => `${soundControl.isEnabled}${soundControl.value}`)
+    .join("/");
+  return React.useMemo(() => {
+    return soundControlsAsList.reduce((options, [name, soundControl]) => {
+      if (soundControl.isEnabled) {
+        options[name] = soundControl.value;
+      }
+      return options;
+    }, {} as Record<keyof SoundControls, number>);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+}
+
 export const Hello: React.FC<HelloProps> = () => {
+  const soundControls = useSoundControls();
+  const playOptions = usePlayOptions(soundControls);
+
   const [selectedInstrument, setInstrument] = React.useState<InstrumentName>(
     "acoustic_grand_piano"
   );
@@ -117,11 +147,11 @@ export const Hello: React.FC<HelloProps> = () => {
     });
   }, []);
 
-  const [isInstrumentInitialized, setInstrumentInitialized] = React.useState(
-    false
-  );
   const [selectedMidiController, setSelectedMidiController] = React.useState<
     string | undefined
+  >(undefined);
+  const [instrumentPlayer, setInstrumentPlayer] = React.useState<
+    player.Player | undefined
   >(undefined);
   const audioContextRef = React.useRef(new AudioContext());
   React.useEffect(() => {
@@ -135,26 +165,40 @@ export const Hello: React.FC<HelloProps> = () => {
       return;
     }
 
-    setInstrumentInitialized(false);
+    setInstrumentPlayer(undefined);
     keystation.removeListener();
 
     player
       .instrument(audioContextRef.current, selectedInstrument)
-      .then((instrument) => {
-        keystation.addListener("noteon", "all", (event) => {
-          const note = event.note;
-          const noteSignature = `${note.name}${note.octave}`;
-          instrument.play(noteSignature, undefined, {});
-        });
-
-        setInstrumentInitialized(true);
+      .then((player) => {
+        setInstrumentPlayer(player);
       })
       .catch(() => {
         setInstrument("acoustic_grand_piano");
       });
   }, [selectedMidiController, selectedInstrument]);
 
+  React.useEffect(() => {
+    if (!instrumentPlayer) {
+      return;
+    }
+    if (!selectedMidiController) {
+      return;
+    }
+    const keystation = WebMidi.getInputById(selectedMidiController);
+    if (!keystation) {
+      return;
+    }
+    keystation.removeListener();
+    keystation.addListener("noteon", "all", (event) => {
+      const note = event.note;
+      const noteSignature = `${note.name}${note.octave}`;
+      instrumentPlayer.play(noteSignature, undefined, playOptions);
+    });
+  }, [selectedMidiController, instrumentPlayer, playOptions]);
+
   const controllers: Input[] = isWebMidiEnabled ? WebMidi.inputs : [];
+  const isInstrumentInitialized = !!instrumentPlayer;
 
   return (
     <HelloStyle>
@@ -212,6 +256,14 @@ export const Hello: React.FC<HelloProps> = () => {
             <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
           </SelectIcon>
         </SelectContainer>
+      </Card>
+      <Spacer />
+      <Card>
+        <ControlPanelHeader>
+          <ControlPanelTitle>{"Control Panel"}</ControlPanelTitle>
+        </ControlPanelHeader>
+        <Spacer />
+        <ControlPanel soundControls={soundControls} />
       </Card>
     </HelloStyle>
   );
