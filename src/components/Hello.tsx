@@ -7,6 +7,7 @@ import player, { InstrumentName } from "soundfont-player";
 import { instruments } from "utils/instruments";
 import { ControlPanel } from "./ControlPanel";
 import { SoundControls, useSoundControls } from "./SoundControl";
+import { Metronome } from "./Metronome";
 
 export interface HelloProps {
   compiler: string;
@@ -256,6 +257,14 @@ export const Hello: React.FC<HelloProps> = () => {
             <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
           </SelectIcon>
         </SelectContainer>
+      </Card>
+      <Spacer />
+      <Card>
+        <ControlPanelHeader>
+          <ControlPanelTitle>{"Metronome"}</ControlPanelTitle>
+        </ControlPanelHeader>
+        <Spacer />
+        <Metronome />
       </Card>
       <Spacer />
       <Card>
