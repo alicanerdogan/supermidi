@@ -28,6 +28,7 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
         tw.rounded_full,
         tw.shadow_inner,
         tw.focus_outline_none,
+        tw.items_center,
         isActive ? tw.bg_blue_400 : tw.bg_gray_400,
         isActive ? tw.justify_end : tw.justify_start
       )}
