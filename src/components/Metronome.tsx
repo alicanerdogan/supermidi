@@ -38,73 +38,94 @@ class BaseMetronome {
   private tempo: number | undefined;
   private playing: boolean;
   private audioCtx: AudioContext;
-  private scheduledTicks: number;
   private soundHz: number;
-  private tick: OscillatorNode;
-  private tickVolume: GainNode;
+  private tick: OscillatorNode | undefined;
+  private tickVolume: GainNode | undefined;
 
-  constructor(audioCtx: AudioContext, ticks?: number) {
+  constructor(audioCtx: AudioContext) {
     this.playing = false;
-
     this.soundHz = 1000;
-    this.scheduledTicks = ticks || 1000;
-
     this.audioCtx = audioCtx;
-    this.tick = this.audioCtx.createOscillator();
-    this.tickVolume = this.audioCtx.createGain();
-
-    this.tick.type = "sine";
-    this.tick.frequency.value = this.soundHz;
-    this.tickVolume.gain.value = 0;
-
-    this.tick.connect(this.tickVolume);
-    this.tickVolume.connect(this.audioCtx.destination);
   }
 
-  clickAtTime(time: number) {
+  private scheduleTickAt(timeInMs: number) {
+    const time = timeInMs / 1000;
     // Silence the click.
-    this.tickVolume.gain.cancelScheduledValues(time);
-    this.tickVolume.gain.setValueAtTime(0, time);
+    const tickVolume = this.tickVolume as GainNode;
+    tickVolume.gain.cancelScheduledValues(time);
+    tickVolume.gain.setValueAtTime(0, time);
 
     // Audible click sound.
-    this.tickVolume.gain.linearRampToValueAtTime(1, time + 0.001);
-    this.tickVolume.gain.linearRampToValueAtTime(0, time + 0.001 + 0.01);
+    tickVolume.gain.linearRampToValueAtTime(1, time + 0.001);
+    tickVolume.gain.linearRampToValueAtTime(0, time + 0.001 + 0.01);
   }
 
-  start(tempo: number, callbackFn?: OnTickCallback) {
+  private timeoutId: NodeJS.Timeout | undefined;
+  private scheduleTicksForInterval() {
+    if (!this.tempo) {
+      throw new Error("Tempo has not been set");
+    }
+    const schedulingInterval = 1024;
+    const tempoInterval = (60 * 1000) / this.tempo;
+    const now = this.audioCtx.currentTime * 1000;
+    const start = now;
+    const end = start + schedulingInterval;
+    const offset = Math.floor(schedulingInterval / tempoInterval);
+    const tickCount = 1 + offset;
+
+    const t = start % tempoInterval;
+
+    if (end - start + t >= tempoInterval) {
+      for (let i = 0; i < tickCount; i++) {
+        const time = start - t + (i + 1) * tempoInterval;
+        this.scheduleTickAt(time);
+      }
+    }
+
+    this.timeoutId = setTimeout(() => {
+      this.scheduleTicksForInterval();
+    }, schedulingInterval);
+  }
+
+  start(tempo: number) {
+    if (this.playing) {
+      return;
+    }
+
     this.tempo = tempo;
     this.playing = true;
 
-    const timeoutDuration = 60 / this.tempo;
-
-    this.tick.start(0); // No offset, start immediately.
-    let now = this.audioCtx.currentTime;
-
-    // Schedule all the clicks ahead.
-    for (let i = 0; i < this.scheduledTicks; i++) {
-      this.clickAtTime(now);
-      const x = now;
-      callbackFn && setTimeout(() => callbackFn(x), now * 1000);
-      now += timeoutDuration;
-    }
-  }
-
-  stop() {
-    this.playing = false;
-    this.tickVolume.gain.value = 0;
-
-    this.tickVolume.disconnect();
-    this.tick.disconnect();
-
+    // Initialize
     this.tick = this.audioCtx.createOscillator();
     this.tickVolume = this.audioCtx.createGain();
-
     this.tick.type = "sine";
     this.tick.frequency.value = this.soundHz;
     this.tickVolume.gain.value = 0;
-
     this.tick.connect(this.tickVolume);
     this.tickVolume.connect(this.audioCtx.destination);
+
+    this.tick.start(0); // No offset, start immediately.
+    this.scheduleTickAt(0);
+    this.scheduleTicksForInterval();
+  }
+
+  updateTempo(tempo: number) {
+    this.tempo = tempo;
+  }
+
+  stop() {
+    if (!this.playing) {
+      return;
+    }
+
+    if (this.timeoutId !== undefined) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = undefined;
+
+    this.playing = false;
+    this.tickVolume && this.tickVolume.disconnect();
+    this.tick && this.tick.disconnect();
   }
 
   isPlaying() {
@@ -123,7 +144,11 @@ function useMetronome({ initialFreq }: { initialFreq?: number } = {}) {
   React.useEffect(() => {
     if (isEnabled) {
       metronomeRef.current.stop();
-      metronomeRef.current.start(value);
+      if (metronomeRef.current.isPlaying()) {
+        metronomeRef.current.updateTempo(value);
+      } else {
+        metronomeRef.current.start(value);
+      }
     } else {
       metronomeRef.current.stop();
     }
@@ -172,4 +197,4 @@ export const Metronome: React.FC<MetronomeProps> = () => {
   );
 };
 
-type OnTickCallback = (time: number) => void;
+// type OnTickCallback = (time: number) => void;
