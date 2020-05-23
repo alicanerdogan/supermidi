@@ -56,6 +56,7 @@
     "react-router-dom": "^5.2.0",
     "react-spring": "^9.0.0-rc.2",
     "react-three-fiber": "^4.2.3",
+    "react-use": "^15.1.0",
     "soundfont-player": "^0.12.0",
     "styled-components": "^5.1.0",
     "tailwind-in-js": "^1.4.5",

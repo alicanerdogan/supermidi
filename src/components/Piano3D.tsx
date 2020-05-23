@@ -4,6 +4,8 @@ import * as drei from "drei";
 import * as R3F from "react-three-fiber";
 import * as ReactSpring from "react-spring/three.cjs";
 import styled from "styled-components";
+import { useThree } from "react-three-fiber";
+import { useMedia } from "react-use";
 
 // function getRadian(degree: number) {
 //   return Math.PI * (degree / 180);
@@ -15,15 +17,15 @@ export type Coordinate = Vector;
 export type Rotation = Vector;
 
 function CameraControls() {
-  return <drei.OrbitControls enabled={true} enableKeys={true} />;
-}
-
-function Plane({ position }: { position: Coordinate }) {
   return (
-    <mesh position={position} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-      <planeBufferGeometry attach="geometry" args={[1000, 1000]} />
-      <meshStandardMaterial attach="material" color="#CBD5E0" />
-    </mesh>
+    <drei.OrbitControls
+      enabled={true}
+      enablePan={true}
+      // enableRotate={false}
+      enableZoom={true}
+      minZoom={1}
+      maxZoom={2}
+    />
   );
 }
 
@@ -270,10 +272,24 @@ function Octave({
 
 function RenderedContent({
   onClickNote,
+  showVertical,
 }: {
   onClickNote?: ({ name: string, octave: number }) => void;
+  showVertical?: boolean;
 }) {
-  // useGridHelper();
+  const { scene } = useThree();
+  React.useEffect(() => {
+    if (showVertical) {
+      scene.rotation.x = (45 * Math.PI) / 180;
+      scene.rotation.y = (90 * Math.PI) / 180;
+      scene.rotation.z = (45 * Math.PI) / 180;
+    } else {
+      scene.rotation.x = 0;
+      scene.rotation.y = 0;
+      scene.rotation.z = 0;
+    }
+    scene.updateMatrix();
+  }, [scene, showVertical]);
 
   return (
     <>
@@ -286,10 +302,9 @@ function RenderedContent({
         penumbra={1}
         castShadow
       />
-      <Plane position={[0, 0, 0]} />
-      <Octave positionX={-14} index={3} onClick={onClickNote} />
-      <Octave positionX={0} index={4} onClick={onClickNote} />
-      <Octave positionX={14} index={5} onClick={onClickNote} />
+      <Octave positionX={-15} index={3} onClick={onClickNote} />
+      <Octave positionX={-1} index={4} onClick={onClickNote} />
+      <Octave positionX={13} index={5} onClick={onClickNote} />
     </>
   );
 }
@@ -310,11 +325,15 @@ export function Piano3D({
 }: {
   onClickNote?: ({ name: string, octave: number }) => void;
 }) {
+  const isMobileDevice = useMedia("(max-width: 768px)");
   return (
     <Piano3DStyle>
       <R3F.Canvas
         shadowMap
-        camera={{ position: [0, 15, 5], fov: 50 }}
+        camera={{
+          position: [0, 25, 25],
+          fov: 70,
+        }}
         onCreated={({ gl, scene }) => {
           scene.rotation.set(Math.PI * -0.1, 0, 0);
           gl.shadowMap.enabled = true;
@@ -322,7 +341,10 @@ export function Piano3D({
           gl.outputEncoding = THREE.sRGBEncoding;
         }}
       >
-        <RenderedContent onClickNote={onClickNote} />
+        <RenderedContent
+          onClickNote={onClickNote}
+          showVertical={isMobileDevice}
+        />
       </R3F.Canvas>
     </Piano3DStyle>
   );

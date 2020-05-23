@@ -113,16 +113,34 @@ const ControlPanelHeader = twStyled.div(tw.mb_2);
 
 const Spacer = twStyled.div(tw.block, tw.h_8);
 
+const TogglePiano3DButton = styled.button`
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 160px;
+  ${twCss(
+    tw.bg_blue_500,
+    tw.hover_bg_blue_600,
+    tw.text_white,
+    tw.rounded,
+    tw.py_2,
+    tw.px_4,
+    tw.mr_2,
+    tw.mb_2
+  )}
+`;
+
 const Piano3DContainer = styled.div`
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 30vh;
+  top: 72px;
+  width: 100vw;
+  height: calc(100vh - 72px);
+  background: #edf2f7;
 `;
 
-export const HelloStyle = twStyled.div(tw.p_8);
+export const HelloStyle = twStyled.div(tw.p_8, tw.relative);
 
 function usePlayOptions(soundControls: SoundControls) {
   const soundControlsAsList = Object.entries(soundControls);
@@ -142,6 +160,13 @@ function usePlayOptions(soundControls: SoundControls) {
 
 export const Hello: React.FC<HelloProps> = () => {
   const piano3dMidiController = usePiano3DMidiController();
+  const [isPianoShown, setPianoShown] = React.useState(true);
+  const togglePianoVisibility = React.useCallback(() => {
+    document.getElementsByTagName("html")[0].style.overflow = isPianoShown
+      ? ""
+      : "hidden";
+    setPianoShown(!isPianoShown);
+  }, [isPianoShown]);
 
   const soundControls = useSoundControls();
   const playOptions = usePlayOptions(soundControls);
@@ -303,11 +328,20 @@ export const Hello: React.FC<HelloProps> = () => {
         <ControlPanel soundControls={soundControls} />
       </Card>
       {selectedMidiController === piano3dMidiController.id && (
-        <Piano3DContainer>
-          <React.Suspense fallback={null}>
-            <LazyLoadedPiano3D onClickNote={piano3dMidiController.onNoteOn} />
-          </React.Suspense>
-        </Piano3DContainer>
+        <>
+          {isPianoShown && (
+            <Piano3DContainer>
+              <React.Suspense fallback={null}>
+                <LazyLoadedPiano3D
+                  onClickNote={piano3dMidiController.onNoteOn}
+                />
+              </React.Suspense>
+            </Piano3DContainer>
+          )}
+          <TogglePiano3DButton onClick={togglePianoVisibility}>
+            {isPianoShown ? "Hide Piano3D" : "Show Piano3D"}
+          </TogglePiano3DButton>
+        </>
       )}
     </HelloStyle>
   );
