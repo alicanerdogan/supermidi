@@ -1,14 +1,9 @@
 import * as THREE from "three";
-import React from "react";
-import { OrbitControls } from "drei";
-import { Canvas } from "react-three-fiber";
-import { useSpring, animated } from "react-spring/three";
-import { Mesh, BoxGeometry } from "three";
+import * as React from "react";
+import * as drei from "drei";
+import * as R3F from "react-three-fiber";
+import * as ReactSpring from "react-spring/three";
 import styled from "styled-components";
-
-// main {
-//   height: 100vh;
-// }
 
 // function getRadian(degree: number) {
 //   return Math.PI * (degree / 180);
@@ -20,7 +15,7 @@ export type Coordinate = Vector;
 export type Rotation = Vector;
 
 function CameraControls() {
-  return <OrbitControls enabled={true} enableKeys={true} />;
+  return <drei.OrbitControls enabled={true} enableKeys={true} />;
 }
 
 function Plane({ position }: { position: Coordinate }) {
@@ -53,8 +48,8 @@ function Box({
   onPointerDown?: () => void;
   onClick?: () => void;
 }) {
-  const boxRef = React.useRef<Mesh>();
-  const geometryRef = React.useRef<BoxGeometry>();
+  const boxRef = React.useRef<THREE.Mesh>();
+  const geometryRef = React.useRef<THREE.BoxGeometry>();
 
   const relativePosition = [
     dimension[0] / 2,
@@ -62,7 +57,7 @@ function Box({
     dimension[2] / 2,
   ] as [number, number, number];
 
-  const { rotation } = useSpring({
+  const { rotation } = ReactSpring.useSpring({
     rotation: [rotationOnX || 0, 0, 0],
     config: { mass: 0.5, tension: 100, friction: 10, precision: 0.0001 },
   });
@@ -73,7 +68,11 @@ function Box({
   }, []);
 
   return (
-    <animated.group ref={boxRef} position={position} rotation={rotation as any}>
+    <ReactSpring.animated.group
+      ref={boxRef}
+      position={position}
+      rotation={rotation as any}
+    >
       <mesh
         castShadow
         receiveShadow
@@ -109,7 +108,7 @@ function Box({
           </lineSegments>
         )}
       </mesh>
-    </animated.group>
+    </ReactSpring.animated.group>
   );
 }
 
@@ -313,7 +312,7 @@ export function Piano3D({
 }) {
   return (
     <Piano3DStyle>
-      <Canvas
+      <R3F.Canvas
         shadowMap
         camera={{ position: [0, 15, 5], fov: 50 }}
         onCreated={({ gl, scene }) => {
@@ -324,7 +323,7 @@ export function Piano3D({
         }}
       >
         <RenderedContent onClickNote={onClickNote} />
-      </Canvas>
+      </R3F.Canvas>
     </Piano3DStyle>
   );
 }
