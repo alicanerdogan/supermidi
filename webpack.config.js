@@ -166,11 +166,6 @@ module.exports = {
           },
         },
       },
-      {
-        // shader import support
-        test: /\.glsl$/,
-        use: ["webpack-glsl-loader"],
-      },
     ],
   },
   plugins,

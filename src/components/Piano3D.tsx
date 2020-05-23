@@ -2,7 +2,7 @@ import * as THREE from "three";
 import * as React from "react";
 import * as drei from "drei";
 import * as R3F from "react-three-fiber";
-import * as ReactSpring from "react-spring/three";
+import * as ReactSpring from "react-spring/three.cjs";
 import styled from "styled-components";
 
 // function getRadian(degree: number) {
