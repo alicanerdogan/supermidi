@@ -58,7 +58,7 @@ const plugins = [
 ];
 
 if (activateReactRefresh) {
-  plugins.push(new ReactRefreshWebpackPlugin({ disableRefreshCheck: true }));
+  plugins.push(new ReactRefreshWebpackPlugin());
 }
 
 if (activateServiceWorker) {

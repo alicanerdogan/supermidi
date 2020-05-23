@@ -1,13 +1,17 @@
 import * as React from "react";
 import { twStyled, twCss } from "utils/styles";
 import * as tw from "tailwind-in-js";
-
+import styled from "styled-components";
 import WebMidi, { Input } from "webmidi";
 import player, { InstrumentName } from "soundfont-player";
+
 import { instruments } from "utils/instruments";
 import { ControlPanel } from "./ControlPanel";
 import { SoundControls, useSoundControls } from "./SoundControl";
 import { Metronome } from "./Metronome";
+import { usePiano3DMidiController } from "./Piano3DMidiController";
+
+const LazyLoadedPiano3D = React.lazy(() => import("./Piano3D"));
 
 export interface HelloProps {
   compiler: string;
@@ -109,6 +113,15 @@ const ControlPanelHeader = twStyled.div(tw.mb_2);
 
 const Spacer = twStyled.div(tw.block, tw.h_8);
 
+const Piano3DContainer = styled.div`
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 30vh;
+`;
+
 export const HelloStyle = twStyled.div(tw.p_8);
 
 function usePlayOptions(soundControls: SoundControls) {
@@ -128,6 +141,8 @@ function usePlayOptions(soundControls: SoundControls) {
 }
 
 export const Hello: React.FC<HelloProps> = () => {
+  const piano3dMidiController = usePiano3DMidiController();
+
   const soundControls = useSoundControls();
   const playOptions = usePlayOptions(soundControls);
 
@@ -160,7 +175,10 @@ export const Hello: React.FC<HelloProps> = () => {
       return;
     }
 
-    const keystation = WebMidi.getInputById(selectedMidiController);
+    const keystation =
+      selectedMidiController === piano3dMidiController.id
+        ? piano3dMidiController
+        : WebMidi.getInputById(selectedMidiController);
 
     if (!keystation) {
       return;
@@ -177,7 +195,7 @@ export const Hello: React.FC<HelloProps> = () => {
       .catch(() => {
         setInstrument("acoustic_grand_piano");
       });
-  }, [selectedMidiController, selectedInstrument]);
+  }, [selectedMidiController, selectedInstrument, piano3dMidiController]);
 
   React.useEffect(() => {
     if (!instrumentPlayer) {
@@ -186,7 +204,10 @@ export const Hello: React.FC<HelloProps> = () => {
     if (!selectedMidiController) {
       return;
     }
-    const keystation = WebMidi.getInputById(selectedMidiController);
+    const keystation =
+      selectedMidiController === piano3dMidiController.id
+        ? piano3dMidiController
+        : WebMidi.getInputById(selectedMidiController);
     if (!keystation) {
       return;
     }
@@ -196,9 +217,16 @@ export const Hello: React.FC<HelloProps> = () => {
       const noteSignature = `${note.name}${note.octave}`;
       instrumentPlayer.play(noteSignature, undefined, playOptions);
     });
-  }, [selectedMidiController, instrumentPlayer, playOptions]);
+  }, [
+    selectedMidiController,
+    instrumentPlayer,
+    playOptions,
+    piano3dMidiController,
+  ]);
 
-  const controllers: Input[] = isWebMidiEnabled ? WebMidi.inputs : [];
+  const controllers: Input[] = isWebMidiEnabled
+    ? [...WebMidi.inputs, piano3dMidiController]
+    : [piano3dMidiController];
   const isInstrumentInitialized = !!instrumentPlayer;
 
   return (
@@ -274,6 +302,13 @@ export const Hello: React.FC<HelloProps> = () => {
         <Spacer />
         <ControlPanel soundControls={soundControls} />
       </Card>
+      {selectedMidiController === piano3dMidiController.id && (
+        <Piano3DContainer>
+          <React.Suspense fallback={null}>
+            <LazyLoadedPiano3D onClickNote={piano3dMidiController.onNoteOn} />
+          </React.Suspense>
+        </Piano3DContainer>
+      )}
     </HelloStyle>
   );
 };
