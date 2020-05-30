@@ -4,7 +4,7 @@ import * as drei from "drei";
 import * as R3F from "react-three-fiber";
 import * as ReactSpring from "react-spring/three.cjs";
 import styled from "styled-components";
-import { useThree } from "react-three-fiber";
+import { useThree, useResource } from "react-three-fiber";
 import { useMedia } from "react-use";
 
 // function getRadian(degree: number) {
@@ -51,7 +51,6 @@ function Box({
   onClick?: () => void;
 }) {
   const boxRef = React.useRef<THREE.Mesh>();
-  const geometryRef = React.useRef<THREE.BoxGeometry>();
 
   const relativePosition = [
     dimension[0] / 2,
@@ -64,10 +63,7 @@ function Box({
     config: { mass: 0.5, tension: 100, friction: 10, precision: 0.0001 },
   });
 
-  const [, setRendered] = React.useState(false);
-  React.useLayoutEffect(() => {
-    setRendered(true);
-  }, []);
+  const [geometryRef, boxGeometryInstance] = useResource<THREE.BoxGeometry>();
 
   return (
     <ReactSpring.animated.group
@@ -100,17 +96,16 @@ function Box({
           clearcoatRoughness={0}
           reflectivity={1}
         />
-        {/* Line segments messes up the structure and breaks the events */}
-        {/* {geometryRef.current && (
-          <lineSegments>
-            <edgesGeometry attach="geometry" args={[geometryRef.current]} />
-            <lineBasicMaterial
-              attach="material"
-              args={[{ color: 0x3c3c3c, linewidth: 1 }]}
-            />
-          </lineSegments>
-        )} */}
       </mesh>
+      {boxGeometryInstance && (
+        <lineSegments position={relativePosition}>
+          <edgesGeometry attach="geometry" args={[boxGeometryInstance]} />
+          <lineBasicMaterial
+            attach="material"
+            args={[{ color: 0x3c3c3c, linewidth: 1 }]}
+          />
+        </lineSegments>
+      )}
     </ReactSpring.animated.group>
   );
 }
