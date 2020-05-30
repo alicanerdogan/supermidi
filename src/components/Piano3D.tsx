@@ -116,7 +116,7 @@ function Box({
           lineHeight={0.75}
           letterSpacing={-0.08}
           textAlign={"center"}
-          font="https://fonts.gstatic.com/s/robotocondensed/v18/ieVl2ZhZI2eCN5jzbjEETS9weq8-19K7DQ.woff2"
+          font="https://static.provetcloud.com/static/fonts/roboto-condensed/robotocondensed-light.woff"
           anchorX="center"
           anchorY="bottom"
           position={[dimension[0] / 2, 0.2, 0]}
@@ -128,6 +128,40 @@ function Box({
   );
 }
 
+function useKeyPress(
+  setPressed: (state: boolean) => void,
+  keyname?: string,
+  onClick?: () => void
+) {
+  const onKeydown = React.useCallback(
+    (event: KeyboardEvent) => {
+      if (keyname !== event.key) {
+        return;
+      }
+      setPressed(true);
+      onClick && onClick();
+    },
+    [onClick, keyname, setPressed]
+  );
+  React.useEffect(() => {
+    document.addEventListener("keydown", onKeydown, false);
+    return () => document.removeEventListener("keydown", onKeydown);
+  }, [onKeydown]);
+  const onKeyup = React.useCallback(
+    (event: KeyboardEvent) => {
+      if (keyname !== event.key) {
+        return;
+      }
+      setPressed(false);
+    },
+    [keyname, setPressed]
+  );
+  React.useEffect(() => {
+    document.addEventListener("keyup", onKeyup, false);
+    return () => document.removeEventListener("keydown", onKeyup);
+  }, [onKeyup]);
+}
+
 function Key({
   position,
   color,
@@ -135,6 +169,7 @@ function Key({
   onClick,
   onPointerOver,
   label,
+  keyname,
 }: {
   position: Coordinate;
   color: string;
@@ -144,8 +179,10 @@ function Key({
   onPointerOut?: () => void;
   onClick?: () => void;
   label?: string;
+  keyname?: string;
 }) {
   const [isPressed, setPressed] = React.useState(false);
+  useKeyPress(setPressed, keyname, isPressed ? undefined : onClick);
   const onPointerDown = React.useCallback(() => {
     setPressed(true);
     onClick && onClick();
@@ -184,14 +221,15 @@ export interface WhiteKeyProps {
   position: Coordinate;
   isPressed?: boolean;
   onClick?: () => void;
-
   label?: string;
+  keyname?: string;
 }
 const WhiteKey: React.FC<WhiteKeyProps> = ({
   isPressed,
   position,
   onClick,
   label,
+  keyname,
 }) => {
   return (
     <Key
@@ -201,6 +239,7 @@ const WhiteKey: React.FC<WhiteKeyProps> = ({
       dimension={[2, 2, 5]}
       onClick={onClick}
       label={label}
+      keyname={keyname}
     />
   );
 };
@@ -210,12 +249,14 @@ export interface BlackKeyProps {
   isPressed?: boolean;
   onClick?: () => void;
   label?: string;
+  keyname?: string;
 }
 const BlackKey: React.FC<BlackKeyProps> = ({
   isPressed,
   position,
   onClick,
   label,
+  keyname,
 }) => {
   return (
     <Key
@@ -225,6 +266,7 @@ const BlackKey: React.FC<BlackKeyProps> = ({
       dimension={[0.5, 0.5, 3]}
       onClick={onClick}
       label={label}
+      keyname={keyname}
     />
   );
 };
@@ -242,6 +284,33 @@ const BlackKey: React.FC<BlackKeyProps> = ({
 //     };
 //   }, [scene]);
 // }
+
+const KEYMAP = {
+  3: {},
+  4: {
+    C: "a",
+    "C#": "w",
+    D: "s",
+    "D#": "e",
+    E: "d",
+    F: "f",
+    "F#": "t",
+    G: "g",
+    "G#": "y",
+    A: "h",
+    "A#": "u",
+    B: "j",
+  },
+  5: {
+    C: "k",
+    "C#": "o",
+    D: "l",
+    "D#": "p",
+    E: ";",
+    F: "'",
+    "F#": "]",
+  },
+};
 
 function Octave({
   positionX,
@@ -291,6 +360,7 @@ function Octave({
           position={position}
           label={`${noteIndex}${index}`}
           onClick={() => onClick && onClick({ name: noteIndex, octave: index })}
+          keyname={KEYMAP[index][noteIndex]}
         />
       ))}
       {blackKeys.map(({ position, noteIndex }, i) => (
@@ -299,6 +369,7 @@ function Octave({
           position={position}
           label={`${noteIndex}${index}`}
           onClick={() => onClick && onClick({ name: noteIndex, octave: index })}
+          keyname={KEYMAP[index][noteIndex]}
         />
       ))}
     </>
