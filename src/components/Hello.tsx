@@ -261,7 +261,9 @@ export const Hello: React.FC<HelloProps> = () => {
     ? [...WebMidi.inputs, piano3dMidiController]
     : [piano3dMidiController];
   const isInstrumentInitialized = !!instrumentPlayer;
+  const isSelectDisabled = isWebMidiEnabled === false && error === undefined;
 
+  console.log({ isWebMidiEnabled, error });
   return (
     <HelloStyle>
       <Card>
@@ -279,11 +281,11 @@ export const Hello: React.FC<HelloProps> = () => {
         <Label>{"Midi Controllers"}</Label>
         <SelectContainer>
           <select
-            css={isWebMidiEnabled ? selectStyle : disabledSelectStyle}
+            css={!isSelectDisabled ? selectStyle : disabledSelectStyle}
             onChange={(ev) => {
               setSelectedMidiController(ev.target.value);
             }}
-            disabled={!isWebMidiEnabled}
+            disabled={isSelectDisabled}
             value={selectedMidiController}
           >
             <option hidden>{"Please select a midi controller"}</option>
