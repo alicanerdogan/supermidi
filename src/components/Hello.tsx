@@ -118,6 +118,7 @@ const TogglePiano3DButton = styled.button`
   right: 0;
   bottom: 0;
   width: 160px;
+  z-index: 4;
   ${twCss(
     tw.bg_blue_500,
     tw.hover_bg_blue_600,
@@ -138,6 +139,7 @@ const Piano3DContainer = styled.div`
   width: 100vw;
   height: calc(100vh - 72px);
   background: #edf2f7;
+  z-index: 3;
 
   canvas {
     &:focus {
