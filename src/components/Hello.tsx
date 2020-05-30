@@ -138,6 +138,12 @@ const Piano3DContainer = styled.div`
   width: 100vw;
   height: calc(100vh - 72px);
   background: #edf2f7;
+
+  canvas {
+    &:focus {
+      outline: none;
+    }
+  }
 `;
 
 export const HelloStyle = twStyled.div(tw.p_8, tw.relative);

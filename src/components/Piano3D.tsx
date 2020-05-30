@@ -100,7 +100,8 @@ function Box({
           clearcoatRoughness={0}
           reflectivity={1}
         />
-        {geometryRef.current && (
+        {/* Line segments messes up the structure and breaks the events */}
+        {/* {geometryRef.current && (
           <lineSegments>
             <edgesGeometry attach="geometry" args={[geometryRef.current]} />
             <lineBasicMaterial
@@ -108,7 +109,7 @@ function Box({
               args={[{ color: 0x3c3c3c, linewidth: 1 }]}
             />
           </lineSegments>
-        )}
+        )} */}
       </mesh>
     </ReactSpring.animated.group>
   );
@@ -118,9 +119,8 @@ function Key({
   position,
   color,
   dimension,
-  onPointerOut,
-  onPointerOver,
   onClick,
+  onPointerOver,
 }: {
   position: Coordinate;
   color: string;
@@ -138,6 +138,16 @@ function Key({
   const onPointerUp = React.useCallback(() => {
     setPressed(false);
   }, []);
+  const onPointerOut = React.useCallback(() => {
+    setPressed(false);
+  }, []);
+  // const [isHovered, setHovered] = React.useState(false);
+  // const onPointerOver = React.useCallback(() => {
+  //   setHovered(true);
+  // }, []);
+  // const onPointerOut = React.useCallback(() => {
+  //   setHovered(false);
+  // }, []);
   const rotationOnX = isPressed ? Math.PI * (7 / 180) : undefined;
 
   return (
