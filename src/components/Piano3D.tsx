@@ -6,6 +6,7 @@ import * as ReactSpring from "react-spring/three.cjs";
 import styled from "styled-components";
 import { useThree, useResource } from "react-three-fiber";
 import { useMedia } from "react-use";
+import { Text } from "drei";
 
 // function getRadian(degree: number) {
 //   return Math.PI * (degree / 180);
@@ -39,6 +40,7 @@ function Box({
   onPointerUp,
   onPointerDown,
   onClick,
+  label,
 }: {
   position: Coordinate;
   color: string;
@@ -49,6 +51,7 @@ function Box({
   onPointerUp?: () => void;
   onPointerDown?: () => void;
   onClick?: () => void;
+  label?: string;
 }) {
   const boxRef = React.useRef<THREE.Mesh>();
 
@@ -106,6 +109,21 @@ function Box({
           />
         </lineSegments>
       )}
+      {label && (
+        <Text
+          color={"#1a1a1a"}
+          fontSize={0.5}
+          lineHeight={0.75}
+          letterSpacing={-0.08}
+          textAlign={"center"}
+          font="https://fonts.gstatic.com/s/robotocondensed/v18/ieVl2ZhZI2eCN5jzbjEETS9weq8-19K7DQ.woff2"
+          anchorX="center"
+          anchorY="bottom"
+          position={[dimension[0] / 2, 0.2, 0]}
+        >
+          {label}
+        </Text>
+      )}
     </ReactSpring.animated.group>
   );
 }
@@ -116,6 +134,7 @@ function Key({
   dimension,
   onClick,
   onPointerOver,
+  label,
 }: {
   position: Coordinate;
   color: string;
@@ -124,6 +143,7 @@ function Key({
   onPointerOver?: () => void;
   onPointerOut?: () => void;
   onClick?: () => void;
+  label?: string;
 }) {
   const [isPressed, setPressed] = React.useState(false);
   const onPointerDown = React.useCallback(() => {
@@ -155,6 +175,7 @@ function Key({
       onPointerOut={onPointerOut}
       onPointerUp={onPointerUp}
       onPointerDown={onPointerDown}
+      label={label}
     />
   );
 }
@@ -163,11 +184,14 @@ export interface WhiteKeyProps {
   position: Coordinate;
   isPressed?: boolean;
   onClick?: () => void;
+
+  label?: string;
 }
 const WhiteKey: React.FC<WhiteKeyProps> = ({
   isPressed,
   position,
   onClick,
+  label,
 }) => {
   return (
     <Key
@@ -176,6 +200,7 @@ const WhiteKey: React.FC<WhiteKeyProps> = ({
       isPressed={isPressed}
       dimension={[2, 2, 5]}
       onClick={onClick}
+      label={label}
     />
   );
 };
@@ -184,11 +209,13 @@ export interface BlackKeyProps {
   position: Coordinate;
   isPressed?: boolean;
   onClick?: () => void;
+  label?: string;
 }
 const BlackKey: React.FC<BlackKeyProps> = ({
   isPressed,
   position,
   onClick,
+  label,
 }) => {
   return (
     <Key
@@ -197,6 +224,7 @@ const BlackKey: React.FC<BlackKeyProps> = ({
       isPressed={isPressed}
       dimension={[0.5, 0.5, 3]}
       onClick={onClick}
+      label={label}
     />
   );
 };
@@ -261,6 +289,7 @@ function Octave({
         <WhiteKey
           key={i}
           position={position}
+          label={`${noteIndex}${index}`}
           onClick={() => onClick && onClick({ name: noteIndex, octave: index })}
         />
       ))}
@@ -268,6 +297,7 @@ function Octave({
         <BlackKey
           key={`black_${i}`}
           position={position}
+          label={`${noteIndex}${index}`}
           onClick={() => onClick && onClick({ name: noteIndex, octave: index })}
         />
       ))}
